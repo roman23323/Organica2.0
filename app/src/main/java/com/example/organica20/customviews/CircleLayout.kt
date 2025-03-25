@@ -21,6 +21,7 @@ class CircleLayout @JvmOverloads constructor(
 ) : ViewGroup(context, attrs, defStyleAttr){
 
     private var angle: Float = 0f
+    private var isAngleComputed: Boolean = false
     private var radiusMultiplier: Int = 4
     private val paint = Paint().apply {
         color = Color.BLACK
@@ -35,6 +36,10 @@ class CircleLayout @JvmOverloads constructor(
             R.styleable.CircleLayout_angle,
             0f
         )
+        if (angle != 0f) {
+            angle = Math.toRadians(angle.toDouble()).toFloat()
+            isAngleComputed = true
+        }
         radiusMultiplier = typedArray.getInteger(
             R.styleable.CircleLayout_radiusMultiplier,
             4
@@ -43,8 +48,9 @@ class CircleLayout @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        if (angle == 0f && childCount > 0) {
-            angle = ((2 * Math.PI) / childCount).toFloat()
+        if (!isAngleComputed) {
+            angle = (2 * Math.PI / (childCount - 1)).toFloat()
+            isAngleComputed = true
         }
 
         var desiredSize = 0
