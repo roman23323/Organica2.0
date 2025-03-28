@@ -3,5 +3,7 @@
     <declare-styleable name="CircleLayout">
         <attr name="angle" format="float"/>
         <attr name="radiusMultiplier" format="integer"/>
+        <attr name="linesPlacement" format="string"/>
+        <attr name="lineOffset" format="float"/>
     </declare-styleable>
 </resources>

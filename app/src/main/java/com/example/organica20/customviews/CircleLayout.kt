@@ -5,13 +5,12 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
 import com.example.organica20.R
+import com.example.organica20.utils.getCircumcircleRadius
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.pow
 import kotlin.math.sin
 
 class CircleLayout @JvmOverloads constructor(
@@ -21,8 +20,10 @@ class CircleLayout @JvmOverloads constructor(
 ) : ViewGroup(context, attrs, defStyleAttr){
 
     private var angle: Float = 0f
-    private var isAngleComputed: Boolean = false
     private var radiusMultiplier: Int = 4
+    private var linesPlacement: String = ""
+    private var lineOffset: Float = 1f
+    private var isAngleComputed: Boolean = false
     private val paint = Paint().apply {
         color = Color.BLACK
         strokeWidth = 2f
@@ -36,20 +37,30 @@ class CircleLayout @JvmOverloads constructor(
             R.styleable.CircleLayout_angle,
             0f
         )
-        if (angle != 0f) {
-            angle = Math.toRadians(angle.toDouble()).toFloat()
-            isAngleComputed = true
-        }
         radiusMultiplier = typedArray.getInteger(
             R.styleable.CircleLayout_radiusMultiplier,
             4
+        )
+        val linePlacementArgument = typedArray.getString(
+            R.styleable.CircleLayout_linesPlacement
+        )
+        if (linePlacementArgument != null) {
+            linesPlacement = linePlacementArgument
+        }
+        lineOffset = typedArray.getFloat(
+            R.styleable.CircleLayout_lineOffset,
+            1f
         )
         typedArray.recycle()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         if (!isAngleComputed) {
-            angle = (2 * Math.PI / (childCount - 1)).toFloat()
+            angle = if (angle == 0f) {
+                (2 * Math.PI / (childCount - 1)).toFloat()
+            } else {
+                Math.toRadians(angle.toDouble()).toFloat()
+            }
             isAngleComputed = true
         }
 
@@ -81,7 +92,6 @@ class CircleLayout @JvmOverloads constructor(
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        val childCount = childCount
         if (childCount == 0) return
 
         val centerX = (r - l) / 2
@@ -92,7 +102,6 @@ class CircleLayout @JvmOverloads constructor(
             val child = getChildAt(i)
             val childWidth = child.measuredWidth
             val childHeight = child.measuredHeight
-
             val angle = (i - 1) * angle
 
             val childCenterX = if (i != 0) {
@@ -105,7 +114,6 @@ class CircleLayout @JvmOverloads constructor(
             } else {
                 centerY
             }
-            Log.d("ON_LAYOUT", "Индекс: $i, (x, y): ($childCenterX, $childCenterY), угол: $angle")
 
             child.layout(
                 childCenterX - childWidth / 2,
@@ -121,30 +129,42 @@ class CircleLayout @JvmOverloads constructor(
 
         if (childCount == 0) return
 
-        val mainChild = getChildAt(0)
-        val mWidth = mainChild.width
-        val mHeight = mainChild.height
-        val mOffsetRadius = (mWidth.toDouble().div(2).pow(2) + mHeight.toDouble().div(2).pow(2)).pow(0.5).toFloat()
-
-        val mCenterX = mainChild.left + mainChild.width / 2
-        val mCenterY = mainChild.top + mainChild.height / 2
+        val mElement = getChildAt(0)
+        val mCircumcircleRadius: Float = getCircumcircleRadius(mElement.width, mElement.height)
+        val mCenterX: Int = mElement.left + mElement.width / 2
+        val mCenterY: Int = mElement.top + mElement.height / 2
 
         for (i in 1 until childCount) {
+            val lineCount = if (linesPlacement.length > (i - 1)) {
+                linesPlacement[i - 1].digitToInt()
+            } else {
+                1
+            }
+            val iAngle = (i - 1) * angle
+            val cosIAngle = cos(iAngle)
+            val sinIAngle = sin(iAngle)
+
+            val offsetCount = 0.5f * (lineCount - 1)
+            val lineOffsetX = lineOffset * cos(Math.PI / 2 + iAngle).toFloat()
+            val lineOffsetY = lineOffset * sin(Math.PI / 2 + iAngle).toFloat()
+
             val child = getChildAt(i)
-            val cWidth = child.width
-            val cHeight = child.height
             val cCenterX = child.left + child.width / 2
             val cCenterY = child.top + child.height / 2
-            val cOffsetRadius = (cWidth.toDouble().div(2).pow(2) + cHeight.toDouble().div(2).pow(2)).pow(0.5).toFloat()
+            val cCircumcircleRadius = getCircumcircleRadius(child.width, child.height)
 
-            val angle = (i - 1) * angle
+            var startX = mCenterX + cosIAngle * mCircumcircleRadius - offsetCount * lineOffsetX
+            var startY = mCenterY + sinIAngle * mCircumcircleRadius - offsetCount * lineOffsetY
+            var endX = cCenterX - cosIAngle * cCircumcircleRadius - offsetCount * lineOffsetX
+            var endY = cCenterY - sinIAngle * cCircumcircleRadius - offsetCount * lineOffsetY
 
-            val startX = mCenterX + cos(angle) * mOffsetRadius
-            val startY = mCenterY + sin(angle) * mOffsetRadius
-            val endX = (cCenterX + cos(2 * Math.PI - (Math.PI - angle)) * cOffsetRadius).toFloat()
-            val endY = (cCenterY + sin(2 * Math.PI - (Math.PI - angle)) * cOffsetRadius).toFloat()
-
-            canvas.drawLine(startX, startY, endX, endY, paint)
+            for (j in 0 until lineCount) {
+                canvas.drawLine(startX, startY, endX, endY, paint)
+                startX += lineOffsetX
+                startY += lineOffsetY
+                endX += lineOffsetX
+                endY += lineOffsetY
+            }
         }
     }
 }
