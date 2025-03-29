@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="CircleLayout">
-        <attr name="angle" format="float"/>
-        <attr name="radiusMultiplier" format="integer"/>
-        <attr name="linesPlacement" format="string"/>
-        <attr name="lineOffset" format="float"/>
+    <declare-styleable name="PlaceLayout">
+        <attr name="placement" format="string"/>
+        <attr name="lines" format="string"/>
+        <attr name="linesOffset" format="dimension"/>
+        <attr name="elementsSpacing" format="dimension"/>
+        <attr name="linesSpacing" format="dimension"/>
     </declare-styleable>
 </resources>
