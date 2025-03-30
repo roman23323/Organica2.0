@@ -23,6 +23,9 @@ class PlaceLayout @JvmOverloads constructor(
     var linesOffset: Int = 0
     var elementsSpacing: Int = 0
     var linesSpacing: Int = 10
+    var zeroElementPosition: Int = 0
+    var zeroElementOffsetX: Int = 0
+    var zeroElementOffsetY: Int = 0
     private val paint = Paint().apply {
         color = Color.BLACK
         strokeWidth = 2f
@@ -56,6 +59,18 @@ class PlaceLayout @JvmOverloads constructor(
             R.styleable.PlaceLayout_linesSpacing,
             linesSpacing
         )
+        zeroElementPosition = typedArray.getInt(
+            R.styleable.PlaceLayout_zeroElementPosition,
+            zeroElementPosition
+        )
+        zeroElementOffsetX = typedArray.getDimensionPixelSize(
+            R.styleable.PlaceLayout_zeroElementOffsetX,
+            0
+        )
+        zeroElementOffsetY = typedArray.getDimensionPixelSize(
+            R.styleable.PlaceLayout_zeroElementOffsetY,
+            0
+        )
         typedArray.recycle()
     }
 
@@ -72,8 +87,62 @@ class PlaceLayout @JvmOverloads constructor(
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         if (childCount == 0) return
 
+        val parentWidth = r - l
+        val parentHeight = b - t
         val child0 = getChildAt(0)
-        child0.layout(l, (b - t) / 2 - child0.measuredHeight / 2, l + child0.measuredWidth, (b - t) / 2 + child0.measuredHeight / 2)
+        var child0Left: Int
+        var child0Top: Int
+        when (zeroElementPosition) {
+            0 -> { // LeftTop
+                child0Left = 0
+                child0Top = 0
+            }
+            1 -> { // CenterTop
+                child0Left = (parentWidth - child0.measuredWidth) / 2
+                child0Top = 0
+            }
+            2 -> { // RightTop
+                child0Left = parentWidth - child0.measuredWidth
+                child0Top = 0
+            }
+            3 -> { // LeftCenter
+                child0Left = 0
+                child0Top = (parentHeight - child0.measuredHeight) / 2
+            }
+            4 -> { // Center
+                child0Left = (parentWidth - child0.measuredWidth) / 2
+                child0Top = (parentHeight - child0.measuredHeight) / 2
+            }
+            5 -> { // RightCenter
+                child0Left = parentWidth - child0.measuredWidth
+                child0Top = (parentHeight - child0.measuredHeight) / 2
+            }
+            6 -> { // LeftBottom
+                child0Left = 0
+                child0Top = parentHeight - child0.measuredHeight
+            }
+            7 -> { // CenterBottom
+                child0Left = (parentWidth - child0.measuredWidth) / 2
+                child0Top = parentHeight - child0.measuredHeight
+            }
+            8 -> { // RightBottom
+                child0Left = parentWidth - child0.measuredWidth
+                child0Top = parentHeight - child0.measuredHeight
+            }
+            else -> { // По умолчанию
+                child0Left = 0
+                child0Top = 0
+            }
+        }
+        child0Left += zeroElementOffsetX
+        child0Top += zeroElementOffsetY
+
+        child0.layout(
+            child0Left,
+            child0Top,
+            child0Left + child0.measuredWidth,
+            child0Top + child0.measuredHeight
+        )
 
         val placements = parsePlacementString(placementString)
 
