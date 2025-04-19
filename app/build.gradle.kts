@@ -38,6 +38,7 @@ android {
 dependencies {
     implementation(libs.moshi)
     implementation(libs.moshiKotlin)
+    implementation(libs.androidx.lifecycle.viewmodel.android)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
