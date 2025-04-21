@@ -5,7 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
-import android.util.Log
+import android.view.View
 import android.view.ViewGroup
 import com.example.organica20.R
 import com.example.organica20.utils.getCircumcircleRadius
@@ -24,17 +24,17 @@ class PlaceLayout @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : ViewGroup(context, attrs, defStyleAttr) {
 
-    lateinit var placementString: String
-    lateinit var placements: List<Placement>
-    lateinit var additionalLinesString: String
-    lateinit var linesInfo: List<LineInfo>
-    var linesOffset: Int = 0
-    var elementsSpacing: Int = 0
-    var linesSpacing: Int = 10
-    var zeroElementPosition: Int = 0
-    var zeroElementOffsetX: Int = 0
-    var zeroElementOffsetY: Int = 0
-    private val paint = Paint().apply {
+    private lateinit var placementString: String
+    private lateinit var placements: List<Placement>
+    private lateinit var additionalLinesString: String
+    private lateinit var linesInfo: List<LineInfo>
+    private var linesOffset: Int = 0
+    private var elementsSpacing: Int = 0
+    private var linesSpacing: Int = 10
+    private var zeroElementPosition: Int = 0
+    private var zeroElementOffsetX: Int = 0
+    private var zeroElementOffsetY: Int = 0
+    private var paint = Paint().apply {
         color = Color.BLACK
         strokeWidth = 2f
         style = Paint.Style.STROKE
@@ -97,89 +97,53 @@ class PlaceLayout @JvmOverloads constructor(
 
         val parentWidth = r - l
         val parentHeight = b - t
-        val child0 = getChildAt(0)
-        var child0Left: Int
-        var child0Top: Int
-        when (zeroElementPosition) {
-            0 -> { // LeftTop
-                child0Left = 0
-                child0Top = 0
-            }
-            1 -> { // CenterTop
-                child0Left = (parentWidth - child0.measuredWidth) / 2
-                child0Top = 0
-            }
-            2 -> { // RightTop
-                child0Left = parentWidth - child0.measuredWidth
-                child0Top = 0
-            }
-            3 -> { // LeftCenter
-                child0Left = 0
-                child0Top = (parentHeight - child0.measuredHeight) / 2
-            }
-            4 -> { // Center
-                child0Left = (parentWidth - child0.measuredWidth) / 2
-                child0Top = (parentHeight - child0.measuredHeight) / 2
-            }
-            5 -> { // RightCenter
-                child0Left = parentWidth - child0.measuredWidth
-                child0Top = (parentHeight - child0.measuredHeight) / 2
-            }
-            6 -> { // LeftBottom
-                child0Left = 0
-                child0Top = parentHeight - child0.measuredHeight
-            }
-            7 -> { // CenterBottom
-                child0Left = (parentWidth - child0.measuredWidth) / 2
-                child0Top = parentHeight - child0.measuredHeight
-            }
-            8 -> { // RightBottom
-                child0Left = parentWidth - child0.measuredWidth
-                child0Top = parentHeight - child0.measuredHeight
-            }
-            else -> { // По умолчанию
-                child0Left = 0
-                child0Top = 0
-            }
-        }
-        child0Left += zeroElementOffsetX
-        child0Top += zeroElementOffsetY
+        val mainChild = getChildAt(0)
+        var (mainChildLeft, mainChildTop) = getMainChildPosition(parentWidth, parentHeight, mainChild.measuredWidth, mainChild.measuredHeight)
 
-        child0.layout(
-            child0Left,
-            child0Top,
-            child0Left + child0.measuredWidth,
-            child0Top + child0.measuredHeight
+        mainChildLeft += zeroElementOffsetX
+        mainChildTop += zeroElementOffsetY
+
+        mainChild.layout(
+            mainChildLeft,
+            mainChildTop,
+            mainChildLeft + mainChild.measuredWidth,
+            mainChildTop + mainChild.measuredHeight
         )
 
         for (placement in placements) {
+            val fromChild = getChildAt(placement.fromIndex)
+            val toChild = getChildAt(placement.toIndex)
+            val fromCenterX = fromChild.left + fromChild.width / 2
+            val fromCenterY = fromChild.top + fromChild.height / 2
+
+            var toCenterX = fromCenterX
+            var toCenterY = fromCenterY
+
             val customSpacing = placement.spacing?.let { (it * resources.displayMetrics.density).toInt() }
-
-            val mainChild = getChildAt(placement.fromIndex)
-            val sideChild = getChildAt(placement.toIndex)
-            val mCenterX = mainChild.left + mainChild.width / 2
-            val mCenterY = mainChild.top + mainChild.height / 2
-
-            var sCenterX = mCenterX
-            var sCenterY = mCenterY
-
-            if (placement.direction != null) {
-                when (placement.direction) {
-                    "R" -> sCenterX += (2 * (customSpacing ?: elementsSpacing) )
-                    "L" -> sCenterX -= (2 * (customSpacing ?: elementsSpacing) )
-                    "U" -> sCenterY -= (2 * (customSpacing ?: elementsSpacing) )
-                    "D" -> sCenterY += (2 * (customSpacing ?: elementsSpacing) )
+            when {
+                placement.direction != null -> {
+                    when (placement.direction) {
+                        "R" -> toCenterX += (2 * (customSpacing ?: elementsSpacing) )
+                        "L" -> toCenterX -= (2 * (customSpacing ?: elementsSpacing) )
+                        "U" -> toCenterY -= (2 * (customSpacing ?: elementsSpacing) )
+                        "D" -> toCenterY += (2 * (customSpacing ?: elementsSpacing) )
+                    }
                 }
+                placement.angle != null -> {
+                    val mRadius = getCircumcircleRadius(fromChild.width, fromChild.height)
+                    val sRadius = getCircumcircleRadius(toChild.measuredWidth, toChild.measuredHeight)
+                    val radialSpacing = ( (customSpacing ?: elementsSpacing) + (mRadius + sRadius) / 2)
+                    toCenterX = fromCenterX + (cos(Math.toRadians(placement.angle.toDouble())) * radialSpacing).toInt()
+                    toCenterY = fromCenterY + (sin(Math.toRadians(placement.angle.toDouble())) * radialSpacing).toInt()
+                }
+                else -> throw IllegalArgumentException("Invalid placement argument: direction from child ${placement.fromIndex} to child ${placement.toIndex} is not specified or is invalid")
             }
-            if (placement.angle != null) {
-                val mRadius = getCircumcircleRadius(mainChild.width, mainChild.height)
-                val sRadius = getCircumcircleRadius(sideChild.measuredWidth, sideChild.measuredHeight)
-                val radialSpacing = ( (customSpacing ?: elementsSpacing) + (mRadius + sRadius) / 2)
-                sCenterX = mCenterX + (cos(Math.toRadians(placement.angle.toDouble())) * radialSpacing).toInt()
-                sCenterY = mCenterY + (sin(Math.toRadians(placement.angle.toDouble())) * radialSpacing).toInt()
-            }
-            sideChild.layout(sCenterX - sideChild.measuredWidth / 2, sCenterY - sideChild.measuredHeight / 2,
-                sCenterX + sideChild.measuredWidth / 2, sCenterY + sideChild.measuredHeight / 2)
+            toChild.layout(
+                toCenterX - toChild.measuredWidth / 2,
+                toCenterY - toChild.measuredHeight / 2,
+                toCenterX + toChild.measuredWidth / 2,
+                toCenterY + toChild.measuredHeight / 2
+            )
         }
     }
 
@@ -196,7 +160,7 @@ class PlaceLayout @JvmOverloads constructor(
             val sCenterX = (sideChild.left + sideChild.width / 2).toFloat()
             val sCenterY = (sideChild.top + sideChild.height / 2).toFloat()
 
-            val lines = calculateLineCoords(
+            val lines = calculateLineCoordinates(
                 mCenterX, mCenterY,
                 sCenterX, sCenterY,
                 mainChild.width, mainChild.height,
@@ -212,7 +176,7 @@ class PlaceLayout @JvmOverloads constructor(
         }
     }
 
-    fun calculateLineCoords(
+    private fun calculateLineCoordinates(
         sx: Float, sy: Float,
         ex: Float, ey: Float,
         sw: Int, sh: Int,
@@ -221,7 +185,6 @@ class PlaceLayout @JvmOverloads constructor(
         startOffset: Int?,
         endOffset: Int?
     ): List<Line> {
-        Log.d("LINES", "($sx, $sy), ($ex, $ey), $sw, $sh")
         var startX: Float
         var startY: Float
         var endX: Float
@@ -242,115 +205,50 @@ class PlaceLayout @JvmOverloads constructor(
                 else priorAngle
             }
         }
-        when (angleDegrees) {
-            in 0.0..90.0 -> {
-                if (tg.absoluteValue <= tgStart.absoluteValue) {
-                    startX = sx + sw / 2
-                    startY = sy + tg.absoluteValue * (sw / 2)
-                } else {
-                    startY = sy + sh / 2
-                    startX = sx + sh / tg.absoluteValue / 2
-                }
-            }
-
-            in 90.0..180.0 -> {
-                if (tg.absoluteValue <= tgStart.absoluteValue) {
-                    startX = sx - sw / 2
-                    startY = sy + tg.absoluteValue * sw / 2
-                } else {
-                    startY = sy + sh / 2
-                    startX = sx - sh / tg.absoluteValue / 2
-                }
-            }
-
-            in 180.0..270.0 -> {
-                if (tg.absoluteValue <= tgStart.absoluteValue) {
-                    startX = sx - sw / 2
-                    startY = sy - tg.absoluteValue * sw / 2
-                } else {
-                    startY = sy - sh / 2
-                    startX = sx - sh / tg.absoluteValue / 2
-                }
-            }
-
-            in 270.0..360.0 -> {
-                if (tg.absoluteValue <= tgStart.absoluteValue) {
-                    startX = sx + sw / 2
-                    startY = sy - tg.absoluteValue * sw / 2
-                } else {
-                    startY = sy - sh / 2
-                    startX = sx + sh / tg.absoluteValue / 2
-                }
-            }
-            else -> {
-                throw IllegalArgumentException("Invalid angle: $angleDegrees")
-            }
+        val (xSign, ySign) = when (angleDegrees) {
+            in 0.0..90.0 -> Pair(1, 1)
+            in 90.0..180.0 -> Pair(-1, 1)
+            in 180.0..270.0 -> Pair(-1, -1)
+            in 270.0..360.0 -> Pair(1, -1)
+            else -> throw IllegalArgumentException("Invalid angle: $angleDegrees")
         }
-        when (angleDegrees) {
-            in 0.0..90.0 -> {
-                if (tg.absoluteValue <= tgEnd.absoluteValue) {
-                    endX = ex - ew / 2
-                    endY = ey - tg.absoluteValue * (ew / 2)
-                } else {
-                    endY = ey - eh / 2
-                    endX = ex - eh / tg.absoluteValue / 2
-                }
-            }
-
-            in 90.0..180.0 -> {
-                if (tg.absoluteValue <= tgEnd.absoluteValue) {
-                    endX = ex + ew / 2
-                    endY = ey - tg.absoluteValue * (ew / 2)
-                } else {
-                    endY = ey - eh / 2
-                    endX = ex + eh / tg.absoluteValue / 2
-                }
-            }
-
-            in 180.0..270.0 -> {
-                if (tg.absoluteValue <= tgEnd.absoluteValue) {
-                    endX = ex + ew / 2
-                    endY = ey + tg.absoluteValue * (ew / 2)
-                } else {
-                    endY = ey + eh / 2
-                    endX = ex + eh / tg.absoluteValue / 2
-                }
-            }
-
-            in 270.0..360.0 -> {
-                if (tg.absoluteValue <= tgEnd.absoluteValue) {
-                    endX = ex - ew / 2
-                    endY = ey + tg.absoluteValue * (ew / 2)
-                } else {
-                    endY = ey + eh / 2
-                    endX = ex - eh / tg.absoluteValue / 2
-                }
-            }
-            else -> {
-                throw IllegalArgumentException("Invalid angle: $angleDegrees")
-            }
+        if (tg.absoluteValue <= tgStart.absoluteValue) {
+            startX = sx + xSign * (sw / 2)
+            startY = sy + ySign * (tg.absoluteValue * (sw / 2))
+        } else {
+            startY = sy + xSign * (sh / 2)
+            startX = sx + ySign * (sh / tg.absoluteValue / 2)
+        }
+        if (tg.absoluteValue <= tgEnd.absoluteValue) {
+            endX = ex - xSign * (ew / 2)
+            endY = ey - ySign * (tg.absoluteValue * (ew / 2))
+        } else {
+            endY = ey - xSign * (eh / 2)
+            endX = ex - ySign * (eh / tg.absoluteValue / 2)
         }
         dx = endX - startX
         dy = endY - startY
 
         val length = sqrt(dx * dx + dy * dy)
-        val k = linesSpacing / length
+        val ratioOfSimilarity = linesSpacing / length
 
         val offsetCount = 0.5f * (lineCount - 1)
-        val lineOffsetX = k * dy
-        val lineOffsetY = k * dx
+        val lineOffsetX = ratioOfSimilarity * dy
+        val lineOffsetY = ratioOfSimilarity * dx
 
         val unitDx = dx / length
         val unitDy = dy / length
+
         startX += (startOffset ?: linesOffset) * unitDx
         startY += (startOffset ?: linesOffset) * unitDy
         endX -= (endOffset ?: linesOffset) * unitDx
         endY -= (endOffset ?: linesOffset) * unitDy
+
         startX += (lineOffsetX * offsetCount)
         startY -= (lineOffsetY * offsetCount)
         endX += (lineOffsetX * offsetCount)
         endY -= (lineOffsetY * offsetCount)
-        Log.d("LINES", "($startX, $startY), ($endX, $endY)")
+
         val linesList = mutableListOf<Line>()
         for (i in 0 until lineCount) {
             linesList.add(Line(startX, startY, endX, endY))
@@ -361,46 +259,63 @@ class PlaceLayout @JvmOverloads constructor(
         }
         return linesList
     }
+    
+    private fun getMainChildPosition(parentWidth: Int, parentHeight: Int, mainChildWidth: Int, mainChildHeight: Int): Pair<Int, Int> {
+        return when (zeroElementPosition) {
+            0 -> Pair(0, 0) // LeftTop
+            1 -> Pair((parentWidth - mainChildWidth) / 2, 0) // CenterTop
+            2 -> Pair(parentWidth - mainChildWidth, 0) // RightTop
+            3 -> Pair(0, (parentHeight - mainChildHeight) / 2) // LeftCenter
+            4 -> Pair((parentWidth - mainChildWidth) / 2, (parentHeight - mainChildHeight) / 2) // Center
+            5 -> Pair(parentWidth - mainChildWidth, (parentHeight - mainChildHeight) / 2) // RightCenter
+            6 -> Pair(0, parentHeight - mainChildHeight) // LeftBottom
+            7 -> Pair((parentWidth - mainChildWidth) / 2, parentHeight - mainChildHeight) // CenterBottom
+            8 -> Pair(parentWidth - mainChildWidth, parentHeight - mainChildHeight) // RightBottom
+            else -> throw IllegalArgumentException("Invalid zero child position: $zeroElementPosition")
+        }
+    }
 
-    fun parseElementsString(input: String, additionalLinesInfo: String = ""): Pair<List<Placement>, List<LineInfo>> {
+    private fun parseElementsString(input: String, additionalLinesInfo: String = ""): Pair<List<Placement>, List<LineInfo>> {
         if (input.isEmpty()) {
             return Pair(emptyList(), emptyList())
         }
         val placements = mutableListOf<Placement>()
         val lines = mutableListOf<LineInfo>()
-        input.split(",").map { entry ->
+        input.split(" ").forEach { entry ->
             val parts = entry.split("_")
 
-            val indices = parts[0].split(".").map { it.toInt() }
-            val fromIndex = indices[0]
-            val toIndex = indices[1]
+            val indices = parts[0].split(".")
+            require(indices.size >= 2) { "Invalid placement argument: element index is not specified or is not Integer: $entry" }
+            val fromIndex = indices[0].toIntOrNull() ?: throw IllegalArgumentException("Invalid fromIndex in placement: $entry")
+            val toIndex = indices[1].toIntOrNull() ?: throw IllegalArgumentException("Invalid toIndex in placement: $entry")
 
-            val placementInfo = parts[1].split(".")
-            val direction = if (placementInfo[0].matches(Regex("[RLUD]"))) placementInfo[0] else null
-            val angle = placementInfo[0].toFloatOrNull()
-            val spacing = placementInfo.getOrNull(1)?.toIntOrNull()
+            val placementInfo = parts.getOrNull(1)?.split(".")
+            val direction = if (placementInfo?.getOrNull(0)?.matches(Regex("[RLUD]")) == true) placementInfo[0] else null
+            val angle = placementInfo?.getOrNull(0)?.toIntOrNull()
+            val spacing = placementInfo?.getOrNull(1)?.toIntOrNull()
 
-            val linesInfo = (parts.getOrNull(2) ?: "1").split(".").map { it.toInt() }
-            val lineCount = linesInfo[0]
-            val startOffset = linesInfo.getOrNull(1)
-            val endOffset = linesInfo.getOrNull(2)
+            val linesInfo = parts.getOrNull(2)?.split(".")?.map { it.toIntOrNull() }
+            val lineCount = linesInfo?.getOrNull(0) ?: 1
+            val startOffset = linesInfo?.getOrNull(1)
+            val endOffset = linesInfo?.getOrNull(2)
 
             placements.add(Placement(fromIndex, toIndex, direction, angle, spacing))
             lines.add(LineInfo(fromIndex, toIndex, lineCount, startOffset, endOffset))
         }
         if (additionalLinesInfo.isNotEmpty()) {
-            additionalLinesInfo.split(",").map { entry ->
-                Log.d("ADDITIONALLINES", entry)
+            additionalLinesInfo.split(" ").map { entry ->
                 val parts = entry.split("_")
-                Log.d("ADDITIONALLINES", "$parts")
-                val indices = parts[0].split(".").map { it.toInt() }
-                val fromIndex = indices[0]
-                val toIndex = indices[1]
 
-                val linesInfo = (parts.getOrNull(1) ?: "1").split(".").map { it.toInt() }
-                val lineCount = linesInfo[0]
-                val startOffset = linesInfo.getOrNull(1)
-                val endOffset = linesInfo.getOrNull(2)
+                val indices = parts[0].split(".")
+                require(indices.size >= 2) { "Invalid additionalLines argument: element index is not specified or is not Integer: $entry" }
+                val fromIndex = indices[0].toIntOrNull() ?: throw IllegalArgumentException("Invalid fromIndex in additionalLines: $entry")
+                val toIndex = indices[1].toIntOrNull() ?: throw IllegalArgumentException("Invalid toIndex in additionalLines: $entry")
+
+
+                val linesInfo = parts.getOrNull(1)?.split(".")?.map { it.toIntOrNull() }
+                val lineCount = linesInfo?.getOrNull(0) ?: 1
+                val startOffset = linesInfo?.getOrNull(1)
+                val endOffset = linesInfo?.getOrNull(2)
 
                 lines.add(LineInfo(fromIndex, toIndex, lineCount, startOffset, endOffset))
             }
@@ -413,7 +328,7 @@ data class Placement(
     val fromIndex: Int,
     val toIndex: Int,
     val direction: String? = null,
-    val angle: Float? = null,
+    val angle: Int? = null,
     val spacing: Int?
 )
 
