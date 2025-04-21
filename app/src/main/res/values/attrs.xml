@@ -2,7 +2,7 @@
 <resources>
     <declare-styleable name="PlaceLayout">
         <attr name="placement" format="string"/>
-        <attr name="lines" format="string"/>
+        <attr name="additionalLines" format="string"/>
         <attr name="linesOffset" format="dimension"/>
         <attr name="elementsSpacing" format="dimension"/>
         <attr name="linesSpacing" format="dimension"/>
