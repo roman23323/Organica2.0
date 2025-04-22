@@ -23,17 +23,14 @@ class PlaceLayout @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : ViewGroup(context, attrs, defStyleAttr) {
-
-    private lateinit var placementString: String
-    private lateinit var placements: List<Placement>
-    private lateinit var additionalLinesString: String
-    private lateinit var linesInfo: List<LineInfo>
+    private var placementString: String = ""
+    private var placements: List<Placement> = emptyList()
+    private var additionalLinesString: String = ""
+    private var linesInfo: List<LineInfo> = emptyList()
     private var linesOffset: Int = 0
     private var elementsSpacing: Int = 0
     private var linesSpacing: Int = 10
-    private var zeroElementPosition: Int = 0
-    private var zeroElementOffsetX: Int = 0
-    private var zeroElementOffsetY: Int = 0
+    private val mainChildPosition: MainChildPosition = MainChildPosition(0)
     private var paint = Paint().apply {
         color = Color.BLACK
         strokeWidth = 2f
@@ -43,16 +40,9 @@ class PlaceLayout @JvmOverloads constructor(
     init {
         setBackgroundColor(Color.TRANSPARENT)
         context.withStyledAttributes(attrs, R.styleable.PlaceLayout) {
-            placementString = getString(
-                R.styleable.PlaceLayout_placement
-            ) ?: ""
-            additionalLinesString = getString(
-                R.styleable.PlaceLayout_additionalLines
-            ) ?: ""
-            val (parsedPlacements, parsedLinesInfo) = parseElementsString(
-                placementString,
-                additionalLinesString
-            )
+            placementString = getString(R.styleable.PlaceLayout_placement) ?: ""
+            additionalLinesString = getString(R.styleable.PlaceLayout_additionalLines) ?: ""
+            val (parsedPlacements, parsedLinesInfo) = parseElementsString(placementString, additionalLinesString)
             placements = parsedPlacements
             linesInfo = parsedLinesInfo
             linesOffset = getDimensionPixelSize(
@@ -67,21 +57,20 @@ class PlaceLayout @JvmOverloads constructor(
                 R.styleable.PlaceLayout_linesSpacing,
                 linesSpacing
             )
-            zeroElementPosition = getInt(
+            mainChildPosition.position = getInt(
                 R.styleable.PlaceLayout_zeroElementPosition,
-                zeroElementPosition
+                mainChildPosition.position
             )
-            zeroElementOffsetX = getDimensionPixelSize(
+            mainChildPosition.xOffset = getDimensionPixelSize(
                 R.styleable.PlaceLayout_zeroElementOffsetX,
-                0
+                mainChildPosition.xOffset
             )
-            zeroElementOffsetY = getDimensionPixelSize(
+            mainChildPosition.yOffset = getDimensionPixelSize(
                 R.styleable.PlaceLayout_zeroElementOffsetY,
-                0
+                mainChildPosition.yOffset
             )
         }
     }
-
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         for (i in 0 until childCount) {
@@ -100,8 +89,8 @@ class PlaceLayout @JvmOverloads constructor(
         val mainChild = getChildAt(0)
         var (mainChildLeft, mainChildTop) = getMainChildPosition(parentWidth, parentHeight, mainChild.measuredWidth, mainChild.measuredHeight)
 
-        mainChildLeft += zeroElementOffsetX
-        mainChildTop += zeroElementOffsetY
+        mainChildLeft += mainChildPosition.xOffset
+        mainChildTop += mainChildPosition.yOffset
 
         mainChild.layout(
             mainChildLeft,
@@ -116,28 +105,19 @@ class PlaceLayout @JvmOverloads constructor(
             val fromCenterX = fromChild.left + fromChild.width / 2
             val fromCenterY = fromChild.top + fromChild.height / 2
 
-            var toCenterX = fromCenterX
-            var toCenterY = fromCenterY
+            var toCenterX: Int
+            var toCenterY: Int
 
             val customSpacing = placement.spacing?.let { (it * resources.displayMetrics.density).toInt() }
-            when {
-                placement.direction != null -> {
-                    when (placement.direction) {
-                        "R" -> toCenterX += (2 * (customSpacing ?: elementsSpacing) )
-                        "L" -> toCenterX -= (2 * (customSpacing ?: elementsSpacing) )
-                        "U" -> toCenterY -= (2 * (customSpacing ?: elementsSpacing) )
-                        "D" -> toCenterY += (2 * (customSpacing ?: elementsSpacing) )
-                    }
-                }
-                placement.angle != null -> {
-                    val mRadius = getCircumcircleRadius(fromChild.width, fromChild.height)
-                    val sRadius = getCircumcircleRadius(toChild.measuredWidth, toChild.measuredHeight)
-                    val radialSpacing = ( (customSpacing ?: elementsSpacing) + (mRadius + sRadius) / 2)
-                    toCenterX = fromCenterX + (cos(Math.toRadians(placement.angle.toDouble())) * radialSpacing).toInt()
-                    toCenterY = fromCenterY + (sin(Math.toRadians(placement.angle.toDouble())) * radialSpacing).toInt()
-                }
-                else -> throw IllegalArgumentException("Invalid placement argument: direction from child ${placement.fromIndex} to child ${placement.toIndex} is not specified or is invalid")
-            }
+
+            val mRadius = getCircumcircleRadius(fromChild.width, fromChild.height)
+            val sRadius = getCircumcircleRadius(toChild.measuredWidth, toChild.measuredHeight)
+            val radialSpacing = (customSpacing ?: elementsSpacing) + (mRadius + sRadius) / 2
+            toCenterX =
+                fromCenterX + (cos(Math.toRadians(placement.angle.toDouble())) * radialSpacing).toInt()
+            toCenterY =
+                fromCenterY + (sin(Math.toRadians(placement.angle.toDouble())) * radialSpacing).toInt()
+
             toChild.layout(
                 toCenterX - toChild.measuredWidth / 2,
                 toCenterY - toChild.measuredHeight / 2,
@@ -150,21 +130,21 @@ class PlaceLayout @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         for (lineInfo in linesInfo) {
-            val mainChild = getChildAt(lineInfo.fromIndex)
-            val sideChild = getChildAt(lineInfo.toIndex)
-            if (mainChild == null || sideChild == null) {
+            val fromChild = getChildAt(lineInfo.fromIndex)
+            val toChild = getChildAt(lineInfo.toIndex)
+            if (fromChild == null || toChild == null) {
                 continue
             }
-            val mCenterX = (mainChild.left + mainChild.width / 2).toFloat()
-            val mCenterY = (mainChild.top + mainChild.height / 2).toFloat()
-            val sCenterX = (sideChild.left + sideChild.width / 2).toFloat()
-            val sCenterY = (sideChild.top + sideChild.height / 2).toFloat()
+            val mCenterX = (fromChild.left + fromChild.width / 2).toFloat()
+            val mCenterY = (fromChild.top + fromChild.height / 2).toFloat()
+            val sCenterX = (toChild.left + toChild.width / 2).toFloat()
+            val sCenterY = (toChild.top + toChild.height / 2).toFloat()
 
             val lines = calculateLineCoordinates(
                 mCenterX, mCenterY,
                 sCenterX, sCenterY,
-                mainChild.width, mainChild.height,
-                sideChild.width, sideChild.height,
+                fromChild.width, fromChild.height,
+                toChild.width, toChild.height,
                 lineInfo.lineCount,
                 lineInfo.startOffset?.let { (it * resources.displayMetrics.density).toInt() },
                 lineInfo.endOffset?.let { (it * resources.displayMetrics.density).toInt() }
@@ -290,16 +270,16 @@ class PlaceLayout @JvmOverloads constructor(
             val toIndex = indices[1].toIntOrNull() ?: throw IllegalArgumentException("Invalid toIndex in placement: $entry")
 
             val placementInfo = parts.getOrNull(1)?.split(".")
-            val direction = if (placementInfo?.getOrNull(0)?.matches(Regex("[RLUD]")) == true) placementInfo[0] else null
-            val angle = placementInfo?.getOrNull(0)?.toIntOrNull()
-            val spacing = placementInfo?.getOrNull(1)?.toIntOrNull()
+            var angle = placementInfo?.getOrNull(0)?.toIntOrNull() ?: throw IllegalArgumentException("Invalid angle in placement: $entry")
+            angle = (angle % 360 + 360) % 360
+            val spacing = placementInfo.getOrNull(1)?.toIntOrNull()
 
             val linesInfo = parts.getOrNull(2)?.split(".")?.map { it.toIntOrNull() }
             val lineCount = linesInfo?.getOrNull(0) ?: 1
             val startOffset = linesInfo?.getOrNull(1)
             val endOffset = linesInfo?.getOrNull(2)
 
-            placements.add(Placement(fromIndex, toIndex, direction, angle, spacing))
+            placements.add(Placement(fromIndex, toIndex, angle, spacing))
             lines.add(LineInfo(fromIndex, toIndex, lineCount, startOffset, endOffset))
         }
         if (additionalLinesInfo.isNotEmpty()) {
@@ -310,7 +290,6 @@ class PlaceLayout @JvmOverloads constructor(
                 require(indices.size >= 2) { "Invalid additionalLines argument: element index is not specified or is not Integer: $entry" }
                 val fromIndex = indices[0].toIntOrNull() ?: throw IllegalArgumentException("Invalid fromIndex in additionalLines: $entry")
                 val toIndex = indices[1].toIntOrNull() ?: throw IllegalArgumentException("Invalid toIndex in additionalLines: $entry")
-
 
                 val linesInfo = parts.getOrNull(1)?.split(".")?.map { it.toIntOrNull() }
                 val lineCount = linesInfo?.getOrNull(0) ?: 1
@@ -327,8 +306,7 @@ class PlaceLayout @JvmOverloads constructor(
 data class Placement(
     val fromIndex: Int,
     val toIndex: Int,
-    val direction: String? = null,
-    val angle: Int? = null,
+    val angle: Int,
     val spacing: Int?
 )
 
@@ -346,3 +324,13 @@ data class Line(
     val ex: Float,
     val ey: Float
 )
+
+data class MainChildPosition(
+    var position: Int,
+    var xOffset: Int = 0,
+    var yOffset: Int = 0
+) {
+    init {
+        require(position in 0..8) { "Invalid main child position argument: expected from 0 to 8, got $position" }
+    }
+}
