@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
-import android.view.View
 import android.view.ViewGroup
 import com.example.organica20.R
 import com.example.organica20.utils.getCircumcircleRadius
@@ -241,17 +240,17 @@ class PlaceLayout @JvmOverloads constructor(
     }
     
     private fun getMainChildPosition(parentWidth: Int, parentHeight: Int, mainChildWidth: Int, mainChildHeight: Int): Pair<Int, Int> {
-        return when (zeroElementPosition) {
-            0 -> Pair(0, 0) // LeftTop
-            1 -> Pair((parentWidth - mainChildWidth) / 2, 0) // CenterTop
-            2 -> Pair(parentWidth - mainChildWidth, 0) // RightTop
-            3 -> Pair(0, (parentHeight - mainChildHeight) / 2) // LeftCenter
+        return when (mainChildPosition.position) {
+            0 -> Pair(0 + paddingLeft, 0 + paddingTop) // LeftTop
+            1 -> Pair((parentWidth - mainChildWidth) / 2, 0 + paddingTop) // CenterTop
+            2 -> Pair(parentWidth - mainChildWidth - paddingRight, 0 + paddingTop) // RightTop
+            3 -> Pair(0 + paddingLeft, (parentHeight - mainChildHeight) / 2) // LeftCenter
             4 -> Pair((parentWidth - mainChildWidth) / 2, (parentHeight - mainChildHeight) / 2) // Center
-            5 -> Pair(parentWidth - mainChildWidth, (parentHeight - mainChildHeight) / 2) // RightCenter
-            6 -> Pair(0, parentHeight - mainChildHeight) // LeftBottom
-            7 -> Pair((parentWidth - mainChildWidth) / 2, parentHeight - mainChildHeight) // CenterBottom
-            8 -> Pair(parentWidth - mainChildWidth, parentHeight - mainChildHeight) // RightBottom
-            else -> throw IllegalArgumentException("Invalid zero child position: $zeroElementPosition")
+            5 -> Pair(parentWidth - mainChildWidth - paddingRight, (parentHeight - mainChildHeight) / 2) // RightCenter
+            6 -> Pair(0 + paddingLeft, parentHeight - mainChildHeight - paddingBottom) // LeftBottom
+            7 -> Pair((parentWidth - mainChildWidth) / 2, parentHeight - mainChildHeight - paddingBottom) // CenterBottom
+            8 -> Pair(parentWidth - mainChildWidth - paddingRight, parentHeight - mainChildHeight - paddingBottom) // RightBottom
+            else -> throw IllegalArgumentException("Invalid main child position argument: expected from 0 to 8, got ${mainChildPosition.position}")
         }
     }
 
