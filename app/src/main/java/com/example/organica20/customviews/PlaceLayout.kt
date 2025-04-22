@@ -28,13 +28,14 @@ class PlaceLayout @JvmOverloads constructor(
     private var linesInfo: List<LineInfo> = emptyList()
     private var linesOffset: Int = 0
     private var elementsSpacing: Int = 0
-    private var linesSpacing: Int = 10
+    private var linesSpacing: Int = 10.dpToPx()
     private val mainChildPosition: MainChildPosition = MainChildPosition(0)
     private var paint = Paint().apply {
         color = Color.BLACK
         strokeWidth = 2f
         style = Paint.Style.STROKE
     }
+    private val density = resources.displayMetrics.density
 
     init {
         setBackgroundColor(Color.TRANSPARENT)
@@ -299,6 +300,10 @@ class PlaceLayout @JvmOverloads constructor(
             }
         }
         return Pair(placements, lines)
+    }
+
+    fun Int.dpToPx(): Int {
+        return (this * density).toInt()
     }
 }
 
