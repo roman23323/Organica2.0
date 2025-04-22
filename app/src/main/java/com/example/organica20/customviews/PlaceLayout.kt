@@ -77,7 +77,56 @@ class PlaceLayout @JvmOverloads constructor(
             val child = getChildAt(i)
             measureChild(child, widthMeasureSpec, heightMeasureSpec)
         }
-        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec))
+        val mainChild = getChildAt(0)
+        val elementsBounds = Array(childCount) { IntArray(4) { 0 } }
+        elementsBounds[0][0] = mainChild.measuredWidth / 2
+        elementsBounds[0][1] = mainChild.measuredHeight / 2
+        elementsBounds[0][2] = - mainChild.measuredWidth / 2
+        elementsBounds[0][3] = - mainChild.measuredHeight / 2
+        for (placement in placements) {
+            val fromChild = getChildAt(placement.fromIndex)
+            val toChild = getChildAt(placement.toIndex)
+            val fromArray = elementsBounds[placement.fromIndex]
+            val toArray = elementsBounds[placement.toIndex]
+
+            val mRadius = getCircumcircleRadius(fromChild.measuredWidth, fromChild.measuredHeight)
+            val sRadius = getCircumcircleRadius(toChild.measuredWidth, toChild.measuredHeight)
+            val customSpacing = placement.spacing?.let { (it * density).toInt() }
+            val spacing = ((customSpacing ?: elementsSpacing) + (mRadius + sRadius) / 2).toInt()
+
+            val sinus = sin(Math.toRadians(placement.angle.toDouble()))
+            val cosinus = if (placement.angle in 90..270) {
+                 - sqrt(1 - sinus * sinus)
+            } else {
+                sqrt(1 - sinus * sinus)
+            }
+            val yOffset = (spacing * sinus).toInt()
+            val xOffset = (spacing * cosinus).toInt()
+            val fromX = (fromArray[0] - fromChild.measuredWidth / 2)
+            val fromY = (fromArray[1] - fromChild.measuredHeight / 2)
+            var toX = fromX + xOffset
+            var toY = fromY + yOffset
+            toArray[0] = toX + toChild.measuredWidth / 2
+            toArray[1] = toY + toChild.measuredHeight / 2
+            toArray[2] = toX - toChild.measuredWidth / 2
+            toArray[3] = toY - toChild.measuredHeight / 2
+        }
+        var left = 0
+        var up = 0
+        var right = 0
+        var down = 0
+        for (bound in elementsBounds) {
+            right = right.coerceAtLeast(bound[0])
+            up = up.coerceAtLeast(bound[1])
+            left = left.coerceAtMost(bound[2])
+            down = down.coerceAtMost(bound[3])
+        }
+        val evaluatedWidth = right - left + paddingLeft + paddingRight
+        val evaluatedHeight = up - down + paddingTop + paddingBottom
+        setMeasuredDimension(
+            resolveSize(evaluatedWidth, widthMeasureSpec),
+            resolveSize(evaluatedHeight, heightMeasureSpec)
+        )
     }
 
 
