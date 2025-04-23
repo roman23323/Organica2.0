@@ -2,10 +2,8 @@ package com.example.organica20.ui.activity
 
 import android.os.Bundle
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.ViewModelProvider
 import com.example.organica20.R
 import com.example.organica20.data.model.Element
@@ -40,8 +38,7 @@ class PageActivity : AppCompatActivity() {
 
         for (element in elements) {
             when (element.type) {
-                Element.TEXT -> addTextView(container, element.content)
-                Element.IMAGE -> addImageView(container, element.content)
+                Element.TEXT -> addTextView(container, element.content!!)
                 Element.HEADER -> findViewById<TextView>(R.id.header).text = element.content
             }
         }
@@ -53,9 +50,5 @@ class PageActivity : AppCompatActivity() {
         container.addView(textView)
     }
 
-    private fun addImageView(container: ViewGroup, src: String) {
-        val imageView = layoutInflater.inflate(R.layout.element_page_image, container, false) as ImageView
-        imageView.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_launcher))
-        container.addView(imageView)
     }
 }

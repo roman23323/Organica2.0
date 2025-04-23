@@ -11,6 +11,5 @@ data class PageElement(
 enum class Element {
     @Json(name = "header") HEADER,
     @Json(name = "text") TEXT,
-    @Json(name = "image") IMAGE,
     @Json(name = "formula") FORMULA
 }
