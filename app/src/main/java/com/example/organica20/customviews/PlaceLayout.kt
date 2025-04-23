@@ -16,6 +16,7 @@ import kotlin.math.sqrt
 import kotlin.math.withSign
 import androidx.core.content.withStyledAttributes
 import androidx.core.view.isEmpty
+import com.example.organica20.data.model.MainChildPosition
 
 class PlaceLayout @JvmOverloads constructor(
     context: Context,
@@ -393,12 +394,3 @@ data class Line(
     val ey: Float
 )
 
-data class MainChildPosition(
-    var position: Int,
-    var xOffset: Int = 0,
-    var yOffset: Int = 0
-) {
-    init {
-        require(position in 0..8) { "Invalid main child position argument: expected from 0 to 8, got $position" }
-    }
-}
