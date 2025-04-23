@@ -11,9 +11,9 @@
     <com.example.organica20.customviews.PlaceLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:zeroElementPosition="LeftCenter"
+        app:zeroElementPosition="LeftTop"
         android:id="@+id/container"
-        app:placement="0.1_30_1 1.2_D.30_2 2.3_150 1.4_-30 4.5_30_2 5.6_D.30 2.7_30 5.8_-30 8.9_30_1.7.3 9.10_-30"
+        app:placement="0.1_30_1 1.2_90.30_2 2.3_150 1.4_-30 4.5_30_2 5.6_90.30 2.7_30 5.8_-30 8.9_30_1.7.3 9.10_-30"
         app:elementsSpacing="40dp"
         app:additionalLines="6.7_2"
         app:linesSpacing="10dp"
