@@ -284,7 +284,7 @@ class PlaceLayout @JvmOverloads constructor(
         endY -= (lineOffsetY * offsetCount)
 
         val linesList = mutableListOf<Line>()
-        for (i in 0 until lineCount) {
+        repeat(lineCount) {
             linesList.add(Line(startX, startY, endX, endY))
             startX -= lineOffsetX
             startY += lineOffsetY
