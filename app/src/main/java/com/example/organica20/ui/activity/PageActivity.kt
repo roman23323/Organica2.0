@@ -6,7 +6,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.organica20.R
+import com.example.organica20.customviews.PlaceLayout
 import com.example.organica20.data.model.Element
+import com.example.organica20.data.model.FormulaData
 import com.example.organica20.data.model.PageElement
 import com.example.organica20.data.repository.PageRepository
 import com.example.organica20.ui.viewmodel.PageViewModel
@@ -40,6 +42,7 @@ class PageActivity : AppCompatActivity() {
             when (element.type) {
                 Element.TEXT -> addTextView(container, element.content!!)
                 Element.HEADER -> findViewById<TextView>(R.id.header).text = element.content
+                Element.FORMULA -> addFormula(container, element.formulaData!!)
             }
         }
     }
@@ -50,5 +53,33 @@ class PageActivity : AppCompatActivity() {
         container.addView(textView)
     }
 
+    private fun addFormula(container: ViewGroup, formulaData: FormulaData) {
+        val nodes = formulaData.nodes.split(' ')
+        val mainChildPosition = formulaData.mainChildPosition
+        val placement = formulaData.placement
+        val additionalLines = formulaData.additionalLines
+
+        val nodeViews = nodes.map {node ->
+            TextView(this, null, 0, R.style.PageText_FormulaNode).apply {
+                text = node
+            }
+        }
+
+        val formulaView = PlaceLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            nodeViews.forEach { nodeView -> addView(nodeView) }
+            this.placementString = placement
+            this.mainChildPosition.apply {
+                position = mainChildPosition.position
+                xOffset = mainChildPosition.xOffset
+                yOffset = mainChildPosition.yOffset
+            }
+            this.additionalLinesString = additionalLines ?: ""
+            requestLayout()
+        }
+        container.addView(formulaView)
     }
 }

@@ -3,11 +3,13 @@
     <style name="PageText">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginLeft">10dp</item>
+        <item name="android:paddingHorizontal">5dp</item>
         <item name="android:layout_marginTop">10dp</item>
-        <item name="android:layout_marginRight">10dp</item>
         <item name="android:fontFamily">@font/montserrat_bold</item>
         <item name="android:textColor">@color/c_blue</item>
         <item name="android:textSize">25sp</item>
+    </style>
+    <style name="PageText.FormulaNode">
+        <item name="android:layout_width">wrap_content</item>
     </style>
 </resources>
