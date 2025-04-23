@@ -102,14 +102,14 @@ class PlaceLayout @JvmOverloads constructor(
             val customSpacing = placement.spacing?.let { (it * density).toInt() }
             val spacing = ((customSpacing ?: elementsSpacing) + (mRadius + sRadius) / 2).toInt()
 
-            val sinus = sin(Math.toRadians(placement.angle.toDouble()))
-            val cosinus = if (placement.angle in 90..270) {
-                 - sqrt(1 - sinus * sinus)
+            val sine = sin(Math.toRadians(placement.angle.toDouble()))
+            val cosine = if (placement.angle in 90..270) {
+                 - sqrt(1 - sine * sine)
             } else {
-                sqrt(1 - sinus * sinus)
+                sqrt(1 - sine * sine)
             }
-            val yOffset = (spacing * sinus).toInt()
-            val xOffset = (spacing * cosinus).toInt()
+            val yOffset = (spacing * sine).toInt()
+            val xOffset = (spacing * cosine).toInt()
             val fromX = (fromArray[0] - fromChild.measuredWidth / 2)
             val fromY = (fromArray[1] - fromChild.measuredHeight / 2)
             var toX = fromX + xOffset
