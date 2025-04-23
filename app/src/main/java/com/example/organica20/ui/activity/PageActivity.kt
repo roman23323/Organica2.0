@@ -48,7 +48,7 @@ class PageActivity : AppCompatActivity() {
     }
 
     private fun addTextView(container: ViewGroup, text: String) {
-        val textView = layoutInflater.inflate(R.layout.element_page_text, container, false) as TextView
+        val textView = TextView(this, null, 0, R.style.PageText)
         textView.text = text
         container.addView(textView)
     }
