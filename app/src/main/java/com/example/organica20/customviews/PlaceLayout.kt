@@ -22,15 +22,23 @@ class PlaceLayout @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : ViewGroup(context, attrs, defStyleAttr) {
-    private var placementString: String = ""
-    private var placements: List<Placement> = emptyList()
-    private var additionalLinesString: String = ""
-    private var linesInfo: List<LineInfo> = emptyList()
-    private var linesOffset: Int = 0
-    private var elementsSpacing: Int = 0
-    private var linesSpacing: Int = 10.dpToPx()
-    private val mainChildPosition: MainChildPosition = MainChildPosition(0)
-    private var paint = Paint().apply {
+    var placements: List<Placement> = emptyList()
+    var linesInfo: List<LineInfo> = emptyList()
+    var placementString: String = ""
+        set(value) {
+            val parsed = parseElementsString(value)
+            placements = parsed.first
+            linesInfo = parsed.second
+        }
+    var additionalLinesString: String = ""
+        set(value) {
+            linesInfo = parseAdditionalLinesString(value)
+        }
+    var linesOffset: Int = 0
+    var elementsSpacing: Int = 0
+    var linesSpacing: Int = 10.dpToPx()
+    val mainChildPosition: MainChildPosition = MainChildPosition(0)
+    var paint = Paint().apply {
         color = Color.BLACK
         strokeWidth = 2f
         style = Paint.Style.STROKE
@@ -42,9 +50,6 @@ class PlaceLayout @JvmOverloads constructor(
         context.withStyledAttributes(attrs, R.styleable.PlaceLayout) {
             placementString = getString(R.styleable.PlaceLayout_placement) ?: ""
             additionalLinesString = getString(R.styleable.PlaceLayout_additionalLines) ?: ""
-            val (parsedPlacements, parsedLinesInfo) = parseElementsString(placementString, additionalLinesString)
-            placements = parsedPlacements
-            linesInfo = parsedLinesInfo
             linesOffset = getDimensionPixelSize(
                 R.styleable.PlaceLayout_linesOffset,
                 linesOffset
@@ -304,22 +309,25 @@ class PlaceLayout @JvmOverloads constructor(
         }
     }
 
-    private fun parseElementsString(input: String, additionalLinesInfo: String = ""): Pair<List<Placement>, List<LineInfo>> {
-        if (input.isEmpty()) {
+    private fun parseElementsString(elementsString: String): Pair<List<Placement>, List<LineInfo>> {
+        if (elementsString.isEmpty()) {
             return Pair(emptyList(), emptyList())
         }
         val placements = mutableListOf<Placement>()
         val lines = mutableListOf<LineInfo>()
-        input.split(" ").forEach { entry ->
+        elementsString.split(" ").forEach { entry ->
             val parts = entry.split("_")
 
             val indices = parts[0].split(".")
             require(indices.size >= 2) { "Invalid placement argument: element index is not specified or is not Integer: $entry" }
-            val fromIndex = indices[0].toIntOrNull() ?: throw IllegalArgumentException("Invalid fromIndex in placement: $entry")
-            val toIndex = indices[1].toIntOrNull() ?: throw IllegalArgumentException("Invalid toIndex in placement: $entry")
+            val fromIndex = indices[0].toIntOrNull()
+                ?: throw IllegalArgumentException("Invalid fromIndex in placement: $entry")
+            val toIndex = indices[1].toIntOrNull()
+                ?: throw IllegalArgumentException("Invalid toIndex in placement: $entry")
 
             val placementInfo = parts.getOrNull(1)?.split(".")
-            var angle = placementInfo?.getOrNull(0)?.toIntOrNull() ?: throw IllegalArgumentException("Invalid angle in placement: $entry")
+            var angle = placementInfo?.getOrNull(0)?.toIntOrNull()
+                ?: throw IllegalArgumentException("Invalid angle in placement: $entry")
             angle = (angle % 360 + 360) % 360
             val spacing = placementInfo.getOrNull(1)?.toIntOrNull()
 
@@ -331,8 +339,12 @@ class PlaceLayout @JvmOverloads constructor(
             placements.add(Placement(fromIndex, toIndex, angle, spacing))
             lines.add(LineInfo(fromIndex, toIndex, lineCount, startOffset, endOffset))
         }
+        return Pair(placements, lines)
+    }
+    private fun parseAdditionalLinesString(additionalLinesInfo: String): List<LineInfo> {
+        val mutableLinesInfo = linesInfo.toMutableList()
         if (additionalLinesInfo.isNotEmpty()) {
-            additionalLinesInfo.split(" ").map { entry ->
+            additionalLinesInfo.split(" ").forEach { entry ->
                 val parts = entry.split("_")
 
                 val indices = parts[0].split(".")
@@ -345,10 +357,10 @@ class PlaceLayout @JvmOverloads constructor(
                 val startOffset = linesInfo?.getOrNull(1)
                 val endOffset = linesInfo?.getOrNull(2)
 
-                lines.add(LineInfo(fromIndex, toIndex, lineCount, startOffset, endOffset))
+                mutableLinesInfo.add(LineInfo(fromIndex, toIndex, lineCount, startOffset, endOffset))
             }
         }
-        return Pair(placements, lines)
+        return mutableLinesInfo
     }
 
     fun Int.dpToPx(): Int {
