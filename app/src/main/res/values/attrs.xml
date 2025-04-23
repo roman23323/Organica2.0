@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="PlaceLayout">
+        <attr name="placement" format="string"/>
+        <attr name="additionalLines" format="string"/>
+        <attr name="linesOffset" format="dimension"/>
+        <attr name="elementsSpacing" format="dimension"/>
+        <attr name="linesSpacing" format="dimension"/>
+        <attr name="zeroElementPosition" format="enum">
+            <enum name="LeftTop" value="0" />
+            <enum name="CenterTop" value="1" />
+            <enum name="RightTop" value="2" />
+            <enum name="LeftCenter" value="3" />
+            <enum name="Center" value="4" />
+            <enum name="RightCenter" value="5" />
+            <enum name="LeftBottom" value="6" />
+            <enum name="CenterBottom" value="7" />
+            <enum name="RightBottom" value="8" />
+        </attr>
+        <attr name="zeroElementOffsetX" format="dimension"/>
+        <attr name="zeroElementOffsetY" format="dimension"/>
+    </declare-styleable>
+</resources>
