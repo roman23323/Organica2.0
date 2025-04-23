@@ -38,6 +38,7 @@ class PlaceLayout @JvmOverloads constructor(
     var elementsSpacing: Int = 0
     var linesSpacing: Int = 10.dpToPx()
     val mainChildPosition: MainChildPosition = MainChildPosition(0)
+    var elementsBounds: Array<IntArray>? = null
     var paint = Paint().apply {
         color = Color.BLACK
         strokeWidth = 2f
@@ -83,16 +84,18 @@ class PlaceLayout @JvmOverloads constructor(
             measureChild(child, widthMeasureSpec, heightMeasureSpec)
         }
         val mainChild = getChildAt(0)
-        val elementsBounds = Array(childCount) { IntArray(4) { 0 } }
-        elementsBounds[0][0] = mainChild.measuredWidth / 2
-        elementsBounds[0][1] = mainChild.measuredHeight / 2
-        elementsBounds[0][2] = - mainChild.measuredWidth / 2
-        elementsBounds[0][3] = - mainChild.measuredHeight / 2
+        if (elementsBounds == null || elementsBounds!!.size != childCount) {
+            elementsBounds = Array(childCount) { IntArray(childCount) { 0 } }
+        }
+        elementsBounds!![0][0] = mainChild.measuredWidth / 2
+        elementsBounds!![0][1] = mainChild.measuredHeight / 2
+        elementsBounds!![0][2] = - mainChild.measuredWidth / 2
+        elementsBounds!![0][3] = - mainChild.measuredHeight / 2
         for (placement in placements) {
             val fromChild = getChildAt(placement.fromIndex)
             val toChild = getChildAt(placement.toIndex)
-            val fromArray = elementsBounds[placement.fromIndex]
-            val toArray = elementsBounds[placement.toIndex]
+            val fromArray = elementsBounds!![placement.fromIndex]
+            val toArray = elementsBounds!![placement.toIndex]
 
             val mRadius = getCircumcircleRadius(fromChild.measuredWidth, fromChild.measuredHeight)
             val sRadius = getCircumcircleRadius(toChild.measuredWidth, toChild.measuredHeight)
@@ -120,7 +123,7 @@ class PlaceLayout @JvmOverloads constructor(
         var up = 0
         var right = 0
         var down = 0
-        for (bound in elementsBounds) {
+        for (bound in elementsBounds!!) {
             right = right.coerceAtLeast(bound[0])
             up = up.coerceAtLeast(bound[1])
             left = left.coerceAtMost(bound[2])
