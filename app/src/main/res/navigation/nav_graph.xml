@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_lessons">
+
+    <fragment
+        android:id="@+id/nav_lessons"
+        android:name="com.example.organica20.ui.fragment.LessonMenuFragment"
+        android:label="Уроки" />
+
+    <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.example.organica20.ui.fragment.ProfileFragment"
+        android:label="Профиль" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.example.organica20.ui.fragment.SettingsFragment"
+        android:label="Настройки" />
+
+</navigation>
