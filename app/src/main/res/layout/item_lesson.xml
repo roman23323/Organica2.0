@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="10dp"
+    app:cardElevation="2dp"
+    app:strokeColor="@color/c_blue"
+    app:cardBackgroundColor="@color/cardview_light_background"
+    app:strokeWidth="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <!-- Иконка урока -->
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginEnd="16dp"
+            android:src="@drawable/ic_alkane_lesson"
+            android:id="@+id/lessonIcon"/>
+
+        <!-- Текстовая часть -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/lessonTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Алканы"
+                android:textColor="@color/c_blue"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat_bold"/>
+
+            <TextView
+                android:id="@+id/lessonDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Простейшие органические вещества с одинарными связями"
+                android:textColor="@color/c_blue"
+                android:textSize="14sp"
+                android:fontFamily="@font/montserrat_regular"/>
+        </LinearLayout>
+
+        <!-- Стрелка перехода -->
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
