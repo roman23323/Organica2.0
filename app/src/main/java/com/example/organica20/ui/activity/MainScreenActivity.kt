@@ -18,7 +18,7 @@ class MainScreenActivity: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main_screen)
         enableEdgeToEdge()
-        setupEdgeToEdge(findViewById(android.R.id.content))
+        setupEdgeToEdge(findViewById(android.R.id.content), bottom = false)
 
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
