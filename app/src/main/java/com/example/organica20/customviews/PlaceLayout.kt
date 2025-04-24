@@ -23,6 +23,8 @@ class PlaceLayout @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : ViewGroup(context, attrs, defStyleAttr) {
+
+    private val density = resources.displayMetrics.density
     var placements: List<Placement> = emptyList()
     var linesInfo: List<LineInfo> = emptyList()
     var placementString: String = ""
@@ -36,7 +38,7 @@ class PlaceLayout @JvmOverloads constructor(
             linesInfo = parseAdditionalLinesString(value)
         }
     var linesOffset: Int = 0
-    var elementsSpacing: Int = 0
+    var elementsSpacing: Int = 20.dpToPx()
     var linesSpacing: Int = 10.dpToPx()
     val mainChildPosition: MainChildPosition = MainChildPosition(0)
     var elementsBounds: Array<IntArray>? = null
@@ -45,7 +47,6 @@ class PlaceLayout @JvmOverloads constructor(
         strokeWidth = 2f
         style = Paint.Style.STROKE
     }
-    private val density = resources.displayMetrics.density
 
     init {
         setBackgroundColor(Color.TRANSPARENT)
